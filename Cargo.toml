@@ -1,7 +1,11 @@
 [workspace]
 resolver = "3"
-members = ["day1-1"]
+members = ["day1-1", "day1-2"]
 
 [workspace.dependencies]
+day1-1 = { path = "day1-1" }
+
+anyhow = "1.0.100"
+thiserror = "2.0.17"
 tracing = "0.1.43"
 tracing-subscriber = "0.3"

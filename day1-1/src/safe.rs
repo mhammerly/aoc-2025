@@ -39,9 +39,10 @@ impl FromStr for Turn {
 }
 
 /// Stats about dial position.
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct DialStats {
     pub landed_on_min: u16,
+    pub touched_min: u64,
 }
 
 /// A safe dial. When turning past `self.max`, `self.current` will overflow starting back at
@@ -76,6 +77,7 @@ impl Dial {
             Turn::L(distance) => self.sub(distance.into()),
         };
         tracing::debug!("Pos {} + {} = Pos {}", old_current, turn, self.current);
+        tracing::debug!("{:?}", self.stats);
         self.current
     }
 
@@ -84,20 +86,29 @@ impl Dial {
         let range = self.max - self.min + 1;
         let full_rotations = i / range;
         let remainder = i % range;
+        tracing::trace!(
+            "Distance {i} is {full_rotations} full rotations and {remainder} additional ticks"
+        );
         (full_rotations, remainder)
     }
 
     fn add(&mut self, i: u64) -> u64 {
-        let (_full_rotations, remainder) = self.rollover(i);
+        let (full_rotations, remainder) = self.rollover(i);
         let space = self.max - self.current;
+
+        // If we turn 350 ticks, no matter what we will touch min 3 times
+        self.stats.touched_min += full_rotations;
 
         if remainder <= space {
             self.current += remainder;
         } else {
+            tracing::debug!("Overflow, will definitely pass {}", self.min);
+            self.stats.touched_min += 1;
             self.current = self.min + (remainder - space - 1);
         }
 
         if self.current == self.min {
+            tracing::debug!("Landed on {}", self.min);
             self.stats.landed_on_min += 1;
         }
 
@@ -105,16 +116,28 @@ impl Dial {
     }
 
     fn sub(&mut self, i: u64) -> u64 {
-        let (_full_rotations, remainder) = self.rollover(i);
+        let (full_rotations, remainder) = self.rollover(i);
         let space = self.current - self.min;
+
+        // If we turn 350 ticks, no matter what we will touch min 3 times
+        self.stats.touched_min += full_rotations;
+
+        // If we land on the min (remainder == space) or overflow (remainder > space) we
+        // will touch min once. However, if we are starting from min, we've already counted
+        // this instance so we should skip it.
+        if remainder >= space && self.current != self.min {
+            self.stats.touched_min += 1;
+        }
 
         if remainder <= space {
             self.current -= remainder;
         } else {
+            tracing::debug!("Underflow");
             self.current = self.max - (remainder - space - 1);
         }
 
         if self.current == self.min {
+            tracing::debug!("Landed on {}", self.min);
             self.stats.landed_on_min += 1;
         }
 
