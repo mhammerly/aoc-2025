@@ -1,0 +1,18 @@
+[package]
+name = "day1-1"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "day1_1_lib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "day1_1"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0.100"
+thiserror = "2.0.17"
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
