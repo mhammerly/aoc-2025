@@ -1,8 +1,36 @@
-use std::env;
-use std::fs::File;
-use std::io::{BufReader, prelude::*};
+#[derive(thiserror::Error, Debug)]
+#[error("invalid range")]
+pub struct InvalidRange;
 
-fn is_invalid(id: u64) -> bool {
+pub struct IdRange {
+    start: u64,
+    end: u64,
+}
+
+impl std::str::FromStr for IdRange {
+    type Err = InvalidRange;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (start, end) = s.split_once('-').ok_or(InvalidRange {})?;
+        let (start, end) = (
+            start.parse::<u64>().map_err(|_| InvalidRange {})?,
+            end.trim().parse::<u64>().map_err(|_| InvalidRange {})?,
+        );
+        Ok(IdRange { start, end })
+    }
+}
+
+impl IdRange {
+    pub fn iter(&self) -> std::ops::RangeInclusive<u64> {
+        self.start..=self.end
+    }
+}
+
+/// Return how many repetitions of a single substring the id consists of.
+///   4444 -> 2 (44 is repeated twice)
+///   1234512345 -> 5 (12345 is repeated twice)
+///   123456789 -> 0 (the ID is not just a substring repeated)
+pub fn count_repetitions(id: u64) -> u32 {
     // 10_u64.ilog10() = 1
     // 100_u64.ilog10() = 2
     // 1000_u64.ilog10() = 3
@@ -12,7 +40,13 @@ fn is_invalid(id: u64) -> bool {
     // We want to check for 1-digit repeated patterns, 2-digit repeated patterns,
     // 3-digit repeated patterns... up to patterns that are half the length of the
     // original number.
-    'outer: for segment_length in 1..=num_digits / 2 {
+    //
+    // We start with the longest possible segment because part 1 only cares about the largest
+    // possible segment. We want an ID like `4444` to be considered invalid because it's 2
+    // repetitions of `44` rather than 4 repetitions of `4`.
+    'outer: for segment_length in (1..=num_digits / 2).rev() {
+        tracing::debug!("testing {id} {num_digits}");
+        tracing::debug!("trying segment length {segment_length}");
         // If the original number's length is not a clean multiple of this pattern
         // length, then skip this pattern length.
         if num_digits % segment_length != 0 {
@@ -55,43 +89,9 @@ fn is_invalid(id: u64) -> bool {
         }
         // If every segment of this length matches, the inner loop exits and we
         // know our ID is invalid.
-        return true;
+        return potential_repetitions;
     }
     // If the outer loop exits, we know we failed to find a segment length for which
     // each segment is identical. This means the ID is valid.
-    false
-}
-
-#[derive(thiserror::Error, Debug)]
-#[error("invalid range")]
-struct InvalidRange();
-
-fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt::init();
-
-    let input_file = File::open(format!("{}/day2-2.input", env!("CARGO_MANIFEST_DIR")))?;
-    let reader = BufReader::new(input_file);
-
-    let mut sum = 0;
-    for item in reader.split(b',') {
-        let item = item?;
-        let range = str::from_utf8(&item)?;
-        tracing::debug!(">>> Processing range {:?}", range);
-
-        let (start, end) = range.split_once('-').ok_or(InvalidRange {})?;
-        let (start, end) = (start.parse::<u64>()?, end.trim().parse::<u64>()?);
-
-        for i in start..=end {
-            if is_invalid(i) {
-                tracing::info!("Invalid: {i}");
-                sum += i;
-            } else {
-                tracing::debug!("Valid:   {i}");
-            }
-        }
-    }
-
-    tracing::info!("Sum of invalid IDs: {}", sum);
-
-    Ok(())
+    0
 }
