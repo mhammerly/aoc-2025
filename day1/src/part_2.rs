@@ -2,15 +2,14 @@ use std::env;
 use std::fs::File;
 use std::io::{BufReader, prelude::*};
 
-mod safe;
-use safe::*;
+use day1::*;
 
 const STARTS_AT: u64 = 50;
 
 fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
 
-    let input_file = File::open(format!("{}/day1-1.input", env!("CARGO_MANIFEST_DIR")))?;
+    let input_file = File::open(format!("{}/day1.input", env!("CARGO_MANIFEST_DIR")))?;
     let reader = BufReader::new(input_file);
 
     let mut dial = Dial::new(STARTS_AT);
@@ -20,7 +19,7 @@ fn main() -> anyhow::Result<()> {
         dial.turn(line?.parse()?);
     }
 
-    tracing::info!("Landed on 0 a total of {} times.", dial.stats.landed_on_min);
+    tracing::info!("Touched 0 a total of {} times.", dial.stats.touched_min);
 
     Ok(())
 }

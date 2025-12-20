@@ -1,11 +1,15 @@
 ### 2025 [advent of code](https://adventofcode.com/) solutions
 
-```
-$ cargo run -p day1-1
-$ cargo run -p day1-2
-$ # etc
-```
+put day 1's input file in `day1/day1.input`, day 2's input file in `day2/day2.input`, and so on.
+run a solution like so:
 
-put input files in problem directories (`$CARGO_MANIFEST_DIR`) and name them `<problem name>.input`.
+```
+$ # run the solution for day 1 part 1
+$ cargo run --bin day1-1
+$ # run the solution for day 1 part 2
+$ cargo run --bin day1-2
 
-set `RUST_LOG=debug` or higher when running to get additional logs
+$ # run the solution for day 2 part 1 with more logs
+$ # (zoom to the bottom of the output in `less` or it will spew broken pipe errors)
+$ RUST_LOG=trace cargo run --bin day2-1 | less -R
+```
