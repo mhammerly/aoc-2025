@@ -1,7 +1,19 @@
 [package]
-name = "day3-1"
+name = "day3"
 version = "0.1.0"
 edition = "2024"
+
+[lib]
+name = "day3"
+path = "src/lib.rs"
+
+[[bin]]
+name = "day3-1"
+path = "src/part_1.rs"
+
+[[bin]]
+name = "day3-2"
+path = "src/part_2.rs"
 
 [dependencies]
 anyhow = { workspace = true }

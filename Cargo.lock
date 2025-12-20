@@ -35,17 +35,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "day3-1"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "thiserror",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
-name = "day3-2"
+name = "day3"
 version = "0.1.0"
 dependencies = [
  "anyhow",
