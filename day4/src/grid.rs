@@ -1,7 +1,7 @@
 use std::iter;
 
 /// The eight adjacencies that each cell may have.
-#[allow(unused)]
+#[derive(Debug, Clone, Copy)]
 pub enum Adjacency {
     TopLeft,
     Top,
@@ -38,6 +38,7 @@ impl GrowableGrid {
         while idx >= self.grid.len() {
             self.grid.extend(iter::repeat_n(None, self.cols));
         }
+        tracing::trace!("Coords ({x}, {y}) resolving to {idx}");
         idx
     }
 
@@ -58,7 +59,7 @@ impl GrowableGrid {
             Adjacency::TopLeft => (x.checked_sub(1), y.checked_sub(1)),
             Adjacency::Top => (x.checked_sub(1), Some(y)),
             Adjacency::TopRight => (x.checked_sub(1), Some(y + 1).filter(|y| *y < self.cols)),
-            Adjacency::Right => (Some(x), Some(y + 1).filter(|y| *y <= self.cols)),
+            Adjacency::Right => (Some(x), Some(y + 1).filter(|y| *y < self.cols)),
             Adjacency::BottomRight => (x.checked_add(1), Some(y + 1).filter(|y| *y < self.cols)),
             Adjacency::Bottom => (x.checked_add(1), Some(y)),
             Adjacency::BottomLeft => (x.checked_add(1), y.checked_sub(1)),
@@ -78,8 +79,11 @@ impl GrowableGrid {
     }
 
     /// Iterate over the grid left to right, top to bottom.
-    pub fn iter(&self) -> std::slice::Iter<'_, Option<u8>> {
-        self.grid.iter()
+    pub fn iter(&mut self) -> impl Iterator<Item = ((usize, usize), &Option<u8>)> {
+        self.grid
+            .iter()
+            .enumerate()
+            .map(|(i, val)| ((i / self.cols, i % self.cols), val))
     }
 }
 

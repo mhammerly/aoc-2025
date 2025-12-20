@@ -10,9 +10,20 @@ fn main() -> anyhow::Result<()> {
     let input_file = File::open(format!("{}/day4.input", env!("CARGO_MANIFEST_DIR")))?;
     let reader = BufReader::new(input_file);
 
-    let paper_storage = PaperStorage::import(reader.lines())?;
-
+    let mut paper_storage = PaperStorage::import(reader.lines())?;
     tracing::debug!("{}", paper_storage);
+    let mut total_removed = 0;
+    loop {
+        let removed = paper_storage.remove_reachable_rolls();
+        if removed == 0 {
+            tracing::debug!("Removed 0, exiting");
+            break;
+        }
+        tracing::debug!("Removed {removed}: {paper_storage}");
+        total_removed += removed;
+    }
 
-    panic!("Not implemented");
+    tracing::info!("Total number of rolls removed: {total_removed}");
+
+    Ok(())
 }

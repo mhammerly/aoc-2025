@@ -2,6 +2,9 @@ use std::io::{BufRead, Lines};
 
 use crate::grid::{Adjacency, GridError, GrowableGrid};
 
+/// A roll is unreachable when `UNREACHABLE_THRESHOLD` rolls are adjacent to it.
+const UNREACHABLE_THRESHOLD: u8 = 4;
+
 pub struct PaperStorage {
     grid: GrowableGrid,
 }
@@ -19,7 +22,7 @@ impl PaperStorage {
         let mut current_row: usize = 0;
         for line in lines {
             let line = line.map_err(|_| GridError {})?;
-            tracing::debug!("{:?}", line);
+            tracing::trace!("{:?}", line);
             for (col, character) in line.chars().enumerate() {
                 // If there is no paper roll here, do nothing.
                 if character != '@' {
@@ -52,8 +55,43 @@ impl PaperStorage {
         Ok(PaperStorage { grid })
     }
 
-    pub fn iter(&self) -> std::slice::Iter<'_, Option<u8>> {
-        self.grid.iter()
+    /// Remove all reachable rolls of paper. Returns the number of rolls removed.
+    pub fn remove_reachable_rolls(&mut self) -> usize {
+        // Identify all of the reachable rolls
+        let mut reachable = vec![];
+        for (coords, val) in self.grid.iter() {
+            match val {
+                Some(adjacent_rolls) if *adjacent_rolls < UNREACHABLE_THRESHOLD => {
+                    reachable.push(coords);
+                }
+                _ => {}
+            }
+        }
+
+        // Remove each reachable roll and remove it from the adjacency count of each surrounding
+        // roll
+        for (x, y) in reachable.iter() {
+            self.grid.put(*x, *y, None);
+            for direction in [
+                Adjacency::TopLeft,
+                Adjacency::Top,
+                Adjacency::TopRight,
+                Adjacency::Right,
+                Adjacency::BottomRight,
+                Adjacency::Bottom,
+                Adjacency::BottomLeft,
+                Adjacency::Left,
+            ] {
+                if let Some(adjacent_rolls) = self.grid.get_adjacent(*x, *y, direction) {
+                    *adjacent_rolls -= 1;
+                    tracing::trace!(
+                        "Decremented ({x}, {y}) {direction:?}, new value {adjacent_rolls}"
+                    );
+                }
+            }
+        }
+
+        reachable.len()
     }
 }
 

@@ -10,14 +10,8 @@ fn main() -> anyhow::Result<()> {
     let input_file = File::open(format!("{}/day4.input", env!("CARGO_MANIFEST_DIR")))?;
     let reader = BufReader::new(input_file);
 
-    let paper_storage = PaperStorage::import(reader.lines())?;
-
-    // A roll is accessible if it a) exists and b) has fewer than four adjacent rolls. Count all
-    // such rolls.
-    let accessible_rolls = paper_storage
-        .iter()
-        .filter_map(|cell: &Option<u8>| cell.filter(|count| *count < 4))
-        .count();
+    let mut paper_storage = PaperStorage::import(reader.lines())?;
+    let accessible_rolls = paper_storage.remove_reachable_rolls();
 
     tracing::info!("There are {accessible_rolls} accessible paper rolls.");
 
