@@ -1,6 +1,9 @@
 use std::env;
 use std::fs::File;
 use std::io::{BufReader, prelude::*};
+use std::ops::RangeInclusive;
+
+use util::range::ParseRange;
 
 use day2::*;
 
@@ -16,8 +19,8 @@ fn main() -> anyhow::Result<()> {
         let range = str::from_utf8(&item)?;
         tracing::debug!(">>> Processing range {:?}", range);
 
-        let id_range: IdRange = range.parse()?;
-        for i in id_range.iter() {
+        let id_range = RangeInclusive::<u64>::parse_range(range)?;
+        for i in id_range {
             // Check whether this ID consists of the same thing repeated twice
             if count_repetitions(i) == 2 {
                 tracing::info!("Invalid: {i}");

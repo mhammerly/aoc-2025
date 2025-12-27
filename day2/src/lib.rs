@@ -1,31 +1,3 @@
-#[derive(thiserror::Error, Debug)]
-#[error("invalid range")]
-pub struct InvalidRange;
-
-pub struct IdRange {
-    start: u64,
-    end: u64,
-}
-
-impl std::str::FromStr for IdRange {
-    type Err = InvalidRange;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (start, end) = s.split_once('-').ok_or(InvalidRange {})?;
-        let (start, end) = (
-            start.parse::<u64>().map_err(|_| InvalidRange {})?,
-            end.trim().parse::<u64>().map_err(|_| InvalidRange {})?,
-        );
-        Ok(IdRange { start, end })
-    }
-}
-
-impl IdRange {
-    pub fn iter(&self) -> std::ops::RangeInclusive<u64> {
-        self.start..=self.end
-    }
-}
-
 /// Return how many repetitions of a single substring the id consists of.
 ///   4444 -> 2 (44 is repeated twice)
 ///   1234512345 -> 5 (12345 is repeated twice)

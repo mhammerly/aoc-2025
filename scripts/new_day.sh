@@ -28,6 +28,8 @@ name = "$day-2"
 path = "src/part_2.rs"
 
 [dependencies]
+util = { workspace = true }
+
 anyhow = { workspace = true }
 thiserror = { workspace = true }
 tracing = { workspace = true }
