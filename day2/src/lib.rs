@@ -21,7 +21,7 @@ pub fn count_repetitions(id: u64) -> u32 {
         tracing::debug!("trying segment length {segment_length}");
         // If the original number's length is not a clean multiple of this pattern
         // length, then skip this pattern length.
-        if num_digits % segment_length != 0 {
+        if !num_digits.is_multiple_of(segment_length) {
             tracing::trace!("{id}: Skipping segment length of {segment_length}");
             continue;
         }
