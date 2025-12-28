@@ -19,3 +19,14 @@ impl<T: FromStr> ParseRange for RangeInclusive<T> {
         Ok(start..=end)
     }
 }
+
+impl<T: FromStr> ParseRange for (T, T) {
+    fn parse_range(s: &str) -> Result<Self, RangeError> {
+        let (start, end) = s.split_once('-').ok_or(RangeError {})?;
+        let (start, end) = (
+            start.parse::<T>().map_err(|_| RangeError {})?,
+            end.trim().parse::<T>().map_err(|_| RangeError {})?,
+        );
+        Ok((start, end))
+    }
+}

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["day1", "day2", "day3", "day4", "util"]
+members = ["util", "day1", "day2", "day3", "day4", "day5"]
 
 [workspace.dependencies]
 anyhow = "1.0.100"
