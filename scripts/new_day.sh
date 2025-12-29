@@ -48,11 +48,14 @@ use std::fs::File;
 use std::io::{BufReader, prelude::*};
 
 use $day::*;
+use util::cli::clap::Parser;
+use util::input_filepath;
 
 fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
+    let args = util::cli::Args::parse();
 
-    let input_file = File::open(format!("{}/$day.input", env!("CARGO_MANIFEST_DIR")))?;
+    let input_file = File::open(input_filepath!(args))?;
     let _reader = BufReader::new(input_file);
 
     panic!("not implemented");
