@@ -41,14 +41,24 @@ impl MultiRange {
         let ends_after_start = self
             .reverse_ranges
             .range(start..=end)
-            .map(|(end, start)| (*start, *end));
-        let starts_before_end = self
+            .map(|(e, s)| (*s, *e));
+        let starts_before_end = self.ranges.range(start..=end).map(|(s, e)| (*s, *e));
+        let contains = self
             .ranges
-            .range(start..=end)
-            .map(|(start, end)| (*start, *end));
+            .range(..=start)
+            .filter(move |(_s, e)| **e >= end)
+            .map(|(s, e)| (*s, *e));
 
         // TODO: Filter out duplicates
-        ends_after_start.chain(starts_before_end)
+        ends_after_start.chain(starts_before_end).chain(contains)
+
+        /* TODO Benchmark / consider getting rid of `reverse_ranges`
+        let between = move |x: &&u64| **x >= start && **x <= end;
+        self.ranges
+            .iter()
+            .filter(move |(s, e)| between(s) || between(e))
+            .map(|(s, e)| (*s, *e))
+        */
     }
 
     pub fn insert(&mut self, (start, end): (u64, u64)) {
@@ -105,7 +115,9 @@ impl FromIterator<(u64, u64)> for MultiRange {
         let mut multirange = MultiRange::new();
 
         for i in iter {
-            multirange.insert(i)
+            multirange.insert(i);
+            tracing::trace!(?multirange.ranges);
+            tracing::trace!(?multirange.reverse_ranges);
         }
 
         multirange

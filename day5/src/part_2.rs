@@ -8,7 +8,19 @@ fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();
 
     let input_file = File::open(format!("{}/day5.input", env!("CARGO_MANIFEST_DIR")))?;
-    let _reader = BufReader::new(input_file);
+    let reader = BufReader::new(input_file);
+    let mut lines = reader.lines();
 
-    panic!("not implemented");
+    tracing::debug!("Building kitchen inventory");
+    let kitchen = Kitchen::import_fresh_ranges(
+        lines
+            .by_ref()
+            .map(|s| s.expect("failed to read file"))
+            .take_while(|s| !s.is_empty()),
+    )?;
+
+    let total_fresh_ingredients = kitchen.fresh_ingredients().count();
+    tracing::info!("Total number of fresh ingredients: {total_fresh_ingredients}");
+
+    Ok(())
 }
