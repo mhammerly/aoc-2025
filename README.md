@@ -22,3 +22,10 @@ $ # run the solution for day 4 part 1 with additional logs
 $ # (zoom to the bottom of the `less` feed and then back up or it will spew broken pipe errors)
 $ RUST_LOG=trace cargo run --bin day4-1 | less -R
 ```
+
+# caching solutions
+the correct solution for the `day1-1` binary with the default input file can be saved
+in `day1/day1-1.solution`. if, for example, `--input test` is provided, the
+corresponding solution file would be `day1/day1-1.test.solution`. if a solution file
+is found, the runner will compare its latest result against the content of the saved
+solution.

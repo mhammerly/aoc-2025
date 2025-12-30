@@ -22,6 +22,15 @@ macro_rules! input_filepath {
     };
 }
 
+/// Plugs a binary's own `CARGO_MANIFEST_DIR` and `CARGO_BIN_NAME` into [`SolveArgs::input_filepath`]
+/// to construct a proper path for that package.
+#[macro_export]
+macro_rules! solution_filepath {
+    ($args:expr) => {
+        $args.solution_filepath(env!("CARGO_MANIFEST_DIR"), env!("CARGO_BIN_NAME"))
+    };
+}
+
 impl SolveArgs {
     /// Given a package's manifest directory and package name, construct an input filepath for that
     /// package based on [the `--input` argument](SolveArgs::input).
@@ -32,6 +41,15 @@ impl SolveArgs {
             .map(|input| format!("{}.{}.input", package, input))
             .unwrap_or(format!("{}.input", package));
         PathBuf::from_iter(&[manifest_dir, &input_filename])
+    }
+
+    pub fn solution_filepath(&self, manifest_dir: &str, binary: &str) -> PathBuf {
+        let solution_filename = self
+            .input
+            .as_ref()
+            .map(|input| format!("{}.{}.solution", binary, input))
+            .unwrap_or(format!("{}.solution", binary));
+        PathBuf::from_iter(&[manifest_dir, &solution_filename])
     }
 }
 
