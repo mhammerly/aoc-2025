@@ -41,13 +41,29 @@ macro_rules! main {
     () => {
         pub fn main() -> anyhow::Result<()> {
             tracing_subscriber::fmt::init();
-            use util::cli::clap::Parser;
-            let args = util::cli::SolutionCli::parse();
+            use util::aoc::Aoc;
+            use util::cli::{Command, SolutionCli, clap::Parser};
+            use util::input_filepath;
+            use util::runner::{RunArgs, run};
+            let args = SolutionCli::parse();
 
-            util::runner::run(&util::runner::RunArgs {
-                solve_fn: solve,
-                input_filepath: util::input_filepath!(args.solve_args),
-            })?;
+            match args.command() {
+                Command::Solve(solve_args) => {
+                    run(&RunArgs {
+                        solve_fn: solve,
+                        input_filepath: input_filepath!(solve_args),
+                    })?;
+                }
+                Command::DownloadInput { session_cookie } => {
+                    let filepath = concat!(
+                        env!("CARGO_MANIFEST_DIR"),
+                        "/",
+                        env!("CARGO_PKG_NAME"),
+                        ".input"
+                    );
+                    Aoc::new(&session_cookie)?.download_input(env!("CARGO_PKG_NAME"), filepath)?;
+                }
+            }
 
             Ok(())
         }

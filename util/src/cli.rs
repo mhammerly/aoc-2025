@@ -1,15 +1,15 @@
 use std::path::PathBuf;
 
-use clap::{Args, Parser};
+use clap::{Args, Parser, Subcommand};
 
 pub use clap;
 
-#[derive(Args, Default)]
+#[derive(Args, Clone)]
 pub struct SolveArgs {
     /// Custom input file to use.
     ///
     /// For example, `--input test` will use `day1.test.input`.
-    #[arg(short = 'i', long = "input")]
+    #[arg(short, long)]
     pub input: Option<String>,
 }
 
@@ -35,8 +35,33 @@ impl SolveArgs {
     }
 }
 
+#[derive(Subcommand, Clone)]
+pub enum Command {
+    /// Run a solution implementation.
+    Solve(SolveArgs),
+
+    /// Download problem input.
+    DownloadInput {
+        #[arg(long)]
+        session_cookie: String,
+    },
+}
+
 #[derive(Parser)]
 pub struct SolutionCli {
+    #[command(subcommand)]
+    command: Option<Command>,
+
     #[clap(flatten)]
-    pub solve_args: SolveArgs,
+    solve_args: SolveArgs,
+}
+
+impl SolutionCli {
+    /// If a command was specified, returns it. Otherwise, uses the top-level [`SolveArgs`] options
+    /// to create a [`Command::Solve`] command.
+    pub fn command(&self) -> Command {
+        self.command
+            .clone()
+            .unwrap_or(Command::Solve(self.solve_args.clone()))
+    }
 }

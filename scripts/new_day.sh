@@ -43,13 +43,13 @@ touch $day/$day.test.input
 # create starter `lib.rs`, `part_1.rs`, and `part_2.rs`
 touch $day/src/lib.rs
 cat << EOF > $day/src/part_1.rs
-use std::io::{BufRead, Lines};
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 
 use $day::*;
 
-#[tracing::instrument(skip(lines))]
-fn solve<B: BufRead>(lines: Lines<B>) -> anyhow::Result<String> {
-    for line in lines {
+fn solve(reader: BufReader<File>) -> anyhow::Result<String> {
+    for line in reader.lines() {
         tracing::trace!("{line:?}");
     }
 
@@ -59,6 +59,11 @@ fn solve<B: BufRead>(lines: Lines<B>) -> anyhow::Result<String> {
 util::main!();
 EOF
 cp $day/src/part_1.rs $day/src/part_2.rs
+
+if [ -n $aoc_cookie ]; then
+    echo "Session cookie set, downloading input for $day"
+    cargo run --bin $day-1 -- download-input --session-cookie $aoc_cookie
+fi
 
 # go back to wherever we were before
 cd -
