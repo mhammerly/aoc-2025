@@ -2,15 +2,8 @@ use std::fs::File;
 use std::io::{BufReader, prelude::*};
 
 use day5::*;
-use util::cli::clap::Parser;
-use util::input_filepath;
 
-fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt::init();
-    let args = util::cli::Args::parse();
-
-    let input_file = File::open(input_filepath!(args))?;
-    let reader = BufReader::new(input_file);
+fn solve(reader: BufReader<File>) -> anyhow::Result<String> {
     let mut lines = reader.lines();
 
     tracing::debug!("Building kitchen inventory");
@@ -32,6 +25,7 @@ fn main() -> anyhow::Result<()> {
     }
 
     tracing::info!("Available fresh ingredients: {fresh_ingredients}");
-
-    Ok(())
+    Ok(fresh_ingredients.to_string())
 }
+
+util::main!();

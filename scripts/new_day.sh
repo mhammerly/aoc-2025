@@ -43,23 +43,20 @@ touch $day/$day.test.input
 # create starter `lib.rs`, `part_1.rs`, and `part_2.rs`
 touch $day/src/lib.rs
 cat << EOF > $day/src/part_1.rs
-use std::env;
-use std::fs::File;
-use std::io::{BufReader, prelude::*};
+use std::io::{BufRead, Lines};
 
 use $day::*;
-use util::cli::clap::Parser;
-use util::input_filepath;
 
-fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt::init();
-    let args = util::cli::Args::parse();
-
-    let input_file = File::open(input_filepath!(args))?;
-    let _reader = BufReader::new(input_file);
+#[tracing::instrument(skip(lines))]
+fn solve<B: BufRead>(lines: Lines<B>) -> anyhow::Result<String> {
+    for line in lines {
+        tracing::trace!("{line:?}");
+    }
 
     panic!("not implemented");
 }
+
+util::main!();
 EOF
 cp $day/src/part_1.rs $day/src/part_2.rs
 

@@ -1,18 +1,9 @@
 use std::fs::File;
 use std::io::{BufReader, prelude::*};
 
-use util::cli::clap::Parser;
-use util::input_filepath;
-
 const BATTERIES_PER_BANK: usize = 12;
 
-fn main() -> anyhow::Result<()> {
-    tracing_subscriber::fmt::init();
-    let args = util::cli::Args::parse();
-
-    let input_file = File::open(input_filepath!(args))?;
-    let reader = BufReader::new(input_file);
-
+fn solve(reader: BufReader<File>) -> anyhow::Result<String> {
     let mut total_joltage = 0;
     for bank in reader.lines() {
         let bank = bank?;
@@ -26,5 +17,7 @@ fn main() -> anyhow::Result<()> {
 
     tracing::info!("Total joltage: {total_joltage}");
 
-    Ok(())
+    Ok(total_joltage.to_string())
 }
+
+util::main!();
