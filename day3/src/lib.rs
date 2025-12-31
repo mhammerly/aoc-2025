@@ -8,9 +8,17 @@ fn unchar(ascii_char: Battery) -> u64 {
     (ascii_char - 48).into()
 }
 
+/// Errors that occur while processing a [`BatteryBank`].
 #[derive(thiserror::Error, Debug)]
-#[error("something went wrong when processing a bank")]
-pub struct BankError;
+pub enum BankError {
+    /// Indicates that you are trying to enable more batteries than are left in the bank.
+    #[error("no batteries left in bank")]
+    NoBatteries,
+
+    /// Indicates that the number of batteries you are enabling is outside the [`u32`] range.
+    #[error(transparent)]
+    NumberError(#[from] std::num::TryFromIntError),
+}
 
 /// Find the maximum voltage possible for `bank` by turning on `enable_limit` batteries.
 pub fn max_joltage(bank: BatteryBank, enable_limit: usize) -> Result<u64, BankError> {
@@ -25,9 +33,9 @@ pub fn max_joltage(bank: BatteryBank, enable_limit: usize) -> Result<u64, BankEr
             .rev()
             .skip(enable_limit - i)
             .max_by_key(|&(_idx, val)| val)
-            .ok_or(BankError {})?;
+            .ok_or(BankError::NoBatteries)?;
 
-        let pow = u32::try_from(enable_limit - i).map_err(|_| BankError {})?;
+        let pow = u32::try_from(enable_limit - i)?;
         bank_joltage += 10_u64.pow(pow) * unchar(*juiciest_battery);
 
         tracing::trace!(

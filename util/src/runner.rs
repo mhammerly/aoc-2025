@@ -4,8 +4,9 @@ use std::path::PathBuf;
 
 pub type SolveFn = fn(BufReader<File>) -> anyhow::Result<String>;
 
+/// Problem-specific parameters that can plug into an otherwise generic solution runner.
 pub struct RunArgs {
-    /// The solution implementation function to run.
+    /// The solution implementation function ([`SolveFn`]) to run.
     ///
     /// Example:
     /// ```
@@ -49,7 +50,24 @@ pub fn run(args: &RunArgs) -> anyhow::Result<String> {
     Ok(solution)
 }
 
-/// Define a `main` function for solutions.
+/// Define a `main` function for solutions. Assumes the solution function ([`SolveFn`]) is named
+/// `solve()`.
+///
+/// Example:
+/// ```ignore
+/// # // This doctest fails because it doesn't depend on `tracing_subscriber`
+/// use std::fs::File;
+/// use std::io::{BufRead, BufReader};
+///
+/// fn solve(reader: BufReader<File>) -> anyhow::Result<String> {
+///     for line in reader.lines() {
+///         tracing::info!("{line:?}");
+///     }
+///     Ok("123".into())
+/// }
+///
+/// util::main!();
+/// ```
 #[macro_export]
 macro_rules! main {
     () => {

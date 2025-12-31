@@ -1,7 +1,12 @@
 /// Return how many repetitions of a single substring the id consists of.
-///   4444 -> 2 (44 is repeated twice)
-///   1234512345 -> 5 (12345 is repeated twice)
+///
+/// Examples:
+/// ```text
+///   4444 -> 2 (44 is repeated twice, rather than 4 being repeated four times)
+///   1234512345 -> 2 (12345 is repeated twice)
+///   123123123 -> 3 (123 is repeated three times)
 ///   123456789 -> 0 (the ID is not just a substring repeated)
+/// ```
 pub fn count_repetitions(id: u64) -> u32 {
     // 10_u64.ilog10() = 1
     // 100_u64.ilog10() = 2

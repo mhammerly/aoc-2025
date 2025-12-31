@@ -1,9 +1,18 @@
 use std::io::{BufRead, Lines};
 
-use crate::grid::{Adjacency, GridError, GrowableGrid};
+use crate::grid::{Adjacency, GrowableGrid};
 
 /// A roll is unreachable when `UNREACHABLE_THRESHOLD` rolls are adjacent to it.
 const UNREACHABLE_THRESHOLD: u8 = 4;
+
+#[derive(thiserror::Error, Debug)]
+pub enum PaperStorageError {
+    #[error("no rows in paper inventory")]
+    EmptyInventory,
+
+    #[error(transparent)]
+    IoError(#[from] std::io::Error),
+}
 
 pub struct PaperStorage {
     grid: GrowableGrid,
@@ -11,17 +20,17 @@ pub struct PaperStorage {
 
 impl PaperStorage {
     /// Import a paper inventory from an iterable of strings.
-    pub fn import<T: BufRead>(lines: Lines<T>) -> Result<PaperStorage, GridError> {
+    pub fn import<T: BufRead>(lines: Lines<T>) -> Result<PaperStorage, PaperStorageError> {
         let mut lines = lines.peekable();
         let cols = match lines.peek() {
             Some(Ok(line)) => Ok(line.len()),
-            _ => Err(GridError {}),
+            _ => Err(PaperStorageError::EmptyInventory),
         }?;
         let mut grid = GrowableGrid::new(cols);
 
         let mut current_row: usize = 0;
         for line in lines {
-            let line = line.map_err(|_| GridError {})?;
+            let line = line?;
             tracing::trace!("{:?}", line);
             for (col, character) in line.chars().enumerate() {
                 // If there is no paper roll here, do nothing.

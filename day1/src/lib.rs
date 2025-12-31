@@ -3,7 +3,7 @@ use std::str::FromStr;
 const DEFAULT_MIN: u64 = 0;
 const DEFAULT_MAX: u64 = 99;
 
-/// A turn on a safe dial. `L(99)` means a turn to the left 99 places.
+/// A turn on a [`Dial`]. `L(99)` means a turn to the left 99 places.
 pub enum Turn {
     L(u16),
     R(u16),
@@ -18,12 +18,16 @@ impl std::fmt::Display for Turn {
     }
 }
 
+/// Error type for parsing [`Turn`]s.
 #[derive(thiserror::Error, Debug)]
 pub enum ParseTurnError {
+    /// Indicates that the distance component of a turn couldn't be parsed.
     #[error(transparent)]
     InvalidDistance(#[from] std::num::ParseIntError),
-    #[error("invalid direction")]
-    InvalidDirection,
+
+    /// Indicates that a turn's direction is not recognized.
+    #[error("invalid direction; expected 'L' or 'R', got '{0}'")]
+    InvalidDirection(String),
 }
 
 impl FromStr for Turn {
@@ -33,7 +37,7 @@ impl FromStr for Turn {
         match s.split_at(1) {
             ("L", distance) => Ok(Turn::L(distance.parse()?)),
             ("R", distance) => Ok(Turn::R(distance.parse()?)),
-            _ => Err(ParseTurnError::InvalidDirection),
+            (direction, _distance) => Err(ParseTurnError::InvalidDirection(direction.into())),
         }
     }
 }
@@ -49,9 +53,18 @@ pub struct DialStats {
 /// `self.min`. Similarly, when turning past `self.min`, `self.current` will underflow starting
 /// back at `self.max`.
 pub struct Dial {
+    /// Current position of the dial. Must be between `self.min` and `self.max`.
     pub current: u64,
+
+    /// Minimum value on the dial. A left turn that goes past this number will wrap around and
+    /// decrease beginning from `self.max`.
     pub min: u64,
+
+    /// Maximum value on the dial. A right turn that goes past this number will wrap around and
+    /// increase beginning from `self.min`.
     pub max: u64,
+
+    /// Stats about the dial's position as turns are applied.
     pub stats: DialStats,
 }
 
@@ -70,6 +83,7 @@ impl Dial {
         Dial::new_with_range(start, DEFAULT_MIN, DEFAULT_MAX)
     }
 
+    /// Apply a [`Turn`] to this dial to update the dial position.
     pub fn turn(&mut self, turn: Turn) -> u64 {
         let old_current = self.current;
         match turn {

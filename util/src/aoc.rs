@@ -12,8 +12,8 @@ pub enum AocError {
     #[error("failed to parse url")]
     UrlError,
 
-    #[error("invalid argument")]
-    ArgError,
+    #[error("unrecognized day: {0}")]
+    DayError(String),
 
     #[error(transparent)]
     IoError(#[from] std::io::Error),
@@ -22,11 +22,15 @@ pub enum AocError {
     ClientError(#[from] reqwest::Error),
 }
 
+/// Advent of Code client.
 pub struct Aoc {
     client: Client,
 }
 
 impl Aoc {
+    /// Create a new [`Aoc`] instance with an `https://adventofcode.com` session cookie.
+    ///
+    /// The session cookie must begin with `session=`.
     pub fn new(session_cookie: &str) -> Result<Aoc, AocError> {
         let cookie_jar = Jar::default();
         cookie_jar.add_cookie_str(
@@ -42,13 +46,19 @@ impl Aoc {
         Ok(Aoc { client })
     }
 
+    /// View a day's input file.
+    ///
+    /// `day` is expected to be `day1`, `day2`, or similar, as it would be from `$CARGO_PKG_NAME`.
     pub fn view_input(&self, day: &str) -> Result<String, AocError> {
-        let day_number = day.chars().last().ok_or(AocError::ArgError)?;
+        let day_number = day.chars().last().ok_or(AocError::DayError(day.into()))?;
         let url = format!("{AOC_BASE_URL}/2025/day/{day_number}/input");
         tracing::info!("Fetching {day} input from {url}");
         Ok(self.client.get(url).send()?.text()?)
     }
 
+    /// Download a day's input file to `filepath`.
+    ///
+    /// `day` is expected to be `day1`, `day2`, or similar, as it would be from `$CARGO_PKG_NAME`.
     pub fn download_input(&self, day: &str, filepath: &str) -> Result<(), AocError> {
         let input = self.view_input(day)?;
 

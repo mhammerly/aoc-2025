@@ -78,7 +78,8 @@ impl GrowableGrid {
         self.grid[idx] = val;
     }
 
-    /// Iterate over the grid left to right, top to bottom.
+    /// Iterate over the grid left to right, top to bottom. Returns a tuple of a cell's 2D
+    /// coordinates along with the value of that cell.
     pub fn iter(&mut self) -> impl Iterator<Item = ((usize, usize), &Option<u8>)> {
         self.grid
             .iter()
@@ -104,7 +105,3 @@ impl std::fmt::Display for GrowableGrid {
         Ok(())
     }
 }
-
-#[derive(thiserror::Error, Clone, Debug)]
-#[error("failed to parse grid")]
-pub struct GridError;

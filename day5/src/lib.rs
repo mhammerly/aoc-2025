@@ -24,6 +24,9 @@ impl Kitchen {
     }
 }
 
+/// A set of non-overlapping integer ranges. When a new range is inserted with
+/// [`MultiRange::insert`], the new range and each range it overlaps with are flattened into a
+/// single range.
 struct MultiRange {
     ranges: BTreeMap<u64, u64>,
     reverse_ranges: BTreeMap<u64, u64>,
@@ -61,6 +64,7 @@ impl MultiRange {
         */
     }
 
+    /// Insert a new inclusive range. Flatten overlapping ranges into a single range.
     pub fn insert(&mut self, (start, end): (u64, u64)) {
         // All ranges that overlap with the current one can be flattened into a single range which
         // begins where the earliest overlapping range begins and ends where the latest overlapping
@@ -99,12 +103,14 @@ impl MultiRange {
         }
     }
 
+    /// Check whether a single point is in contained in any of this [`MultiRange`]'s ranges.
     pub fn check_point(&self, point: u64) -> bool {
         self.ranges
             .iter()
             .any(|(start, end)| point >= *start && point <= *end)
     }
 
+    /// Iterate from lowest to highest over every value included in a range.
     pub fn iter(&self) -> impl Iterator<Item = u64> {
         self.ranges.iter().flat_map(|(start, end)| *start..=*end)
     }
