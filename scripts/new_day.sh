@@ -8,7 +8,7 @@ repo_root=$(git rev-parse --show-toplevel)
 cd $repo_root
 
 # create the cargo project and fill in its `Cargo.toml`
-cargo new $day
+cargo new --lib $day
 cat << EOF > $day/Cargo.toml
 [package]
 name = "$day"
