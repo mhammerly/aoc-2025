@@ -1,6 +1,8 @@
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader, Write};
 use std::path::PathBuf;
+
+use crate::aoc::{Aoc, AocResult};
 
 pub type SolveFn = fn(BufReader<File>) -> anyhow::Result<String>;
 
@@ -26,6 +28,12 @@ pub struct RunArgs {
 
     /// The filepath where a cached solution may be saved (e.g. `day1/day1-1.solution`)
     pub solution_filepath: PathBuf,
+
+    /// The problem whose solution is being run (e.g. day1-1, day3-2).
+    pub problem: &'static str,
+
+    /// Advent of Code session cookie. If set, the solution will be submitted to AOC.
+    pub session_cookie: Option<String>,
 }
 
 /// Run a solution function according to [`RunArgs`].
@@ -44,6 +52,16 @@ pub fn run(args: &RunArgs) -> anyhow::Result<String> {
             tracing::info!("Correct! (`{}` == `{}`)", solution, cached_solution);
         } else {
             tracing::error!("Incorrect! (`{}` != `{}`)", solution, cached_solution);
+        }
+    } else if let Some(session_cookie) = &args.session_cookie {
+        tracing::info!("Submitting solution to AOC");
+        // as-is, this will exit if not success, thereby skipping the write
+        let aoc_result = Aoc::new(session_cookie)?.submit(args.problem, &solution)?;
+        if aoc_result == AocResult::Correct {
+            let mut file = File::create(&args.solution_filepath)?;
+            write!(file, "{}", &solution)?;
+        } else {
+            tracing::error!("Incorrect! (`{}`)", solution);
         }
     }
 
@@ -85,6 +103,8 @@ macro_rules! main {
                         solve_fn: solve,
                         input_filepath: input_filepath!(solve_args),
                         solution_filepath: solution_filepath!(solve_args),
+                        problem: env!("CARGO_BIN_NAME"),
+                        session_cookie: solve_args.session_cookie,
                     })?;
                 }
                 Command::DownloadInput { session_cookie } => {

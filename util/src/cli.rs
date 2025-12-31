@@ -11,6 +11,10 @@ pub struct SolveArgs {
     /// For example, `--input test` will use `day1.test.input`.
     #[arg(short, long)]
     pub input: Option<String>,
+
+    /// Advent of Code session cookie. If set, the solution will be submitted to AOC.
+    #[arg(long)]
+    pub session_cookie: Option<String>,
 }
 
 /// Plugs a package's own `CARGO_MANIFEST_DIR` and `CARGO_PKG_NAME` into [`SolveArgs::input_filepath`]

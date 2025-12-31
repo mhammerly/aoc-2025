@@ -18,6 +18,10 @@ $ # download the input file for day 3
 $ export aoc_cookie="session=<redacted>"
 $ cargo run --bin day3-1 -- download-input --session-cookie $aoc_cookie
 
+$ # run the solution for day 3 part 1 with `day3/day3.input`
+$ # and submit the result to AoC
+$ cargo run --bin day2-2 -- --session-cookie $aoc_cookie
+
 $ # run the solution for day 4 part 1 with additional logs
 $ # (zoom to the bottom of the `less` feed and then back up or it will spew broken pipe errors)
 $ RUST_LOG=trace cargo run --bin day4-1 | less -R
@@ -29,3 +33,7 @@ in `day1/day1-1.solution`. if, for example, `--input test` is provided, the
 corresponding solution file would be `day1/day1-1.test.solution`. if a solution file
 is found, the runner will compare its latest result against the content of the saved
 solution.
+
+if a solution is submitted to AoC and AoC indicates that it is correct, the solution
+will be cached in the appropriate file for the problem. if a cached solution is found
+then the solution will not be submitted again.
