@@ -6,6 +6,8 @@ use reqwest::{Url, blocking::Client, cookie::Jar, header};
 
 const AOC_BASE_URL: &str = "https://adventofcode.com";
 
+const SESSION_COOKIE_VAR: &str = "AOC_SESSION_COOKIE";
+
 const CORRECT_ANSWER: &str = "That's the right answer!";
 const INCORRECT_ANSWER: &str = "That's not the right answer.";
 const ALREADY_SOLVED: &str = "You don't seem to be solving the right level.";
@@ -59,6 +61,9 @@ pub enum AocError {
     #[error("unrecognized problem: {0}")]
     UnrecognizedProblem(String),
 
+    #[error("must set `$AOC_SESSION_COOKIE` env var")]
+    MissingSession(#[from] std::env::VarError),
+
     #[error(transparent)]
     IoError(#[from] std::io::Error),
 
@@ -85,13 +90,15 @@ pub struct Aoc {
 }
 
 impl Aoc {
-    /// Create a new [`Aoc`] instance with an `https://adventofcode.com` session cookie.
+    /// Create a new [`Aoc`] instance with an `https://adventofcode.com` session cookie read from
+    /// [`SESSION_COOKIE_VAR`].
     ///
     /// The session cookie must begin with `session=`.
-    pub fn new(session_cookie: &str) -> Result<Aoc, AocError> {
+    pub fn new() -> Result<Aoc, AocError> {
+        let session_cookie = std::env::var(SESSION_COOKIE_VAR)?;
         let cookie_jar = Jar::default();
         cookie_jar.add_cookie_str(
-            session_cookie,
+            &session_cookie,
             &AOC_BASE_URL
                 .parse::<Url>()
                 .map_err(|_| AocError::UrlError)?,

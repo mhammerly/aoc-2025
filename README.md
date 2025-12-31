@@ -8,19 +8,20 @@ test cases.
 
 run like so:
 ```
-$ # run the solution for day 1 part 1
+$ # run the solution for day 1 part 1 with `day1/day1.input`
 $ cargo run --bin day1-1
 
 $ # run the solution for day 2 part 2 with `day2/day2.test.input`
 $ cargo run --bin day2-2 -- --input test
 
 $ # download the input file for day 3
-$ export aoc_cookie="session=<redacted>"
-$ cargo run --bin day3-1 -- download-input --session-cookie $aoc_cookie
+$ export AOC_SESSION_COOKIE="session=<redacted>"
+$ cargo run --bin day3-1 -- download-input
 
-$ # run the solution for day 3 part 1 with `day3/day3.input`
+$ # run the solution for day 2 part 2 with `day2/day2.input`
 $ # and submit the result to AoC
-$ cargo run --bin day2-2 -- --session-cookie $aoc_cookie
+$ export AOC_SESSION_COOKIE="session=<redacted>"
+$ cargo run --bin day2-2 -- --submit
 
 $ # run the solution for day 4 part 1 with additional logs
 $ # (zoom to the bottom of the `less` feed and then back up or it will spew broken pipe errors)

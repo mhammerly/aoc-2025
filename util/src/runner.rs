@@ -23,17 +23,17 @@ pub struct RunArgs {
     /// ```
     pub solve_fn: SolveFn,
 
+    /// The problem whose solution is being run (e.g. day1-1, day3-2).
+    pub problem: &'static str,
+
     /// The input filepath (e.g. `day1/day1.input`).
     pub input_filepath: PathBuf,
 
     /// The filepath where a cached solution may be saved (e.g. `day1/day1-1.solution`)
     pub solution_filepath: PathBuf,
 
-    /// The problem whose solution is being run (e.g. day1-1, day3-2).
-    pub problem: &'static str,
-
-    /// Advent of Code session cookie. If set, the solution will be submitted to AOC.
-    pub session_cookie: Option<String>,
+    /// Advent of Code client. Will submit solutions if set.
+    pub aoc_client: Option<Aoc>,
 }
 
 /// Run a solution function according to [`RunArgs`].
@@ -53,10 +53,10 @@ pub fn run(args: &RunArgs) -> anyhow::Result<String> {
         } else {
             tracing::error!("Incorrect! (`{}` != `{}`)", solution, cached_solution);
         }
-    } else if let Some(session_cookie) = &args.session_cookie {
+    } else if let Some(aoc) = &args.aoc_client {
         tracing::info!("Submitting solution to AOC");
         // as-is, this will exit if not success, thereby skipping the write
-        let aoc_result = Aoc::new(session_cookie)?.submit(args.problem, &solution)?;
+        let aoc_result = aoc.submit(args.problem, &solution)?;
         if aoc_result == AocResult::Correct {
             let mut file = File::create(&args.solution_filepath)?;
             write!(file, "{}", &solution)?;
@@ -99,22 +99,27 @@ macro_rules! main {
 
             match args.command() {
                 Command::Solve(solve_args) => {
+                    let aoc_client = if solve_args.submit {
+                        Some(Aoc::new()?)
+                    } else {
+                        None
+                    };
                     run(&RunArgs {
                         solve_fn: solve,
                         input_filepath: input_filepath!(solve_args),
                         solution_filepath: solution_filepath!(solve_args),
                         problem: env!("CARGO_BIN_NAME"),
-                        session_cookie: solve_args.session_cookie,
+                        aoc_client,
                     })?;
                 }
-                Command::DownloadInput { session_cookie } => {
+                Command::DownloadInput => {
                     let filepath = concat!(
                         env!("CARGO_MANIFEST_DIR"),
                         "/",
                         env!("CARGO_PKG_NAME"),
                         ".input"
                     );
-                    Aoc::new(&session_cookie)?.download_input(env!("CARGO_PKG_NAME"), filepath)?;
+                    Aoc::new()?.download_input(env!("CARGO_PKG_NAME"), filepath)?;
                 }
             }
 

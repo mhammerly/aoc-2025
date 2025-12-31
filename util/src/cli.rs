@@ -4,6 +4,7 @@ use clap::{Args, Parser, Subcommand};
 
 pub use clap;
 
+/// Command line arguments related to the [`Command::Solve`] command.
 #[derive(Args, Clone)]
 pub struct SolveArgs {
     /// Custom input file to use.
@@ -12,9 +13,12 @@ pub struct SolveArgs {
     #[arg(short, long)]
     pub input: Option<String>,
 
-    /// Advent of Code session cookie. If set, the solution will be submitted to AOC.
-    #[arg(long)]
-    pub session_cookie: Option<String>,
+    /// Whether to submit the solution to Advent of Code.
+    ///
+    /// Expects `$AOC_SESSION_COOKIE` env var to be set; see [`crate::aoc::Aoc`].
+    #[arg(short, long)]
+    #[clap(default_value_t = false)]
+    pub submit: bool,
 }
 
 /// Plugs a package's own `CARGO_MANIFEST_DIR` and `CARGO_PKG_NAME` into [`SolveArgs::input_filepath`]
@@ -47,6 +51,8 @@ impl SolveArgs {
         PathBuf::from_iter(&[manifest_dir, &input_filename])
     }
 
+    /// Given a binary's manifest directory and binary name, construct an input filepath for that
+    /// binary based on [the `--input` argument](SolveArgs::input).
     pub fn solution_filepath(&self, manifest_dir: &str, binary: &str) -> PathBuf {
         let solution_filename = self
             .input
@@ -63,10 +69,9 @@ pub enum Command {
     Solve(SolveArgs),
 
     /// Download problem input.
-    DownloadInput {
-        #[arg(long)]
-        session_cookie: String,
-    },
+    ///
+    /// Expects `$AOC_SESSION_COOKIE` env var to be set; see [`crate::aoc::Aoc`].
+    DownloadInput,
 }
 
 #[derive(Parser)]
