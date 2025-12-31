@@ -2,7 +2,10 @@ use std::fs::File;
 use std::io::{BufReader, Write};
 use std::path::PathBuf;
 
-use crate::aoc::{Aoc, AocResult};
+use crate::{
+    Problem,
+    aoc::{Aoc, AocResult},
+};
 
 pub type SolveFn = fn(BufReader<File>) -> anyhow::Result<String>;
 
@@ -23,8 +26,8 @@ pub struct RunArgs {
     /// ```
     pub solve_fn: SolveFn,
 
-    /// The problem whose solution is being run (e.g. day1-1, day3-2).
-    pub problem: &'static str,
+    /// The [`Problem`] whose solution is being run (e.g. day1-1, day3-2).
+    pub problem: Problem,
 
     /// The input filepath (e.g. `day1/day1.input`).
     pub input_filepath: PathBuf,
@@ -55,8 +58,7 @@ pub fn run(args: &RunArgs) -> anyhow::Result<String> {
         }
     } else if let Some(aoc) = &args.aoc_client {
         tracing::info!("Submitting solution to AOC");
-        // as-is, this will exit if not success, thereby skipping the write
-        let aoc_result = aoc.submit(args.problem, &solution)?;
+        let aoc_result = aoc.submit(&args.problem, &solution)?;
         if aoc_result == AocResult::Correct {
             let mut file = File::create(&args.solution_filepath)?;
             write!(file, "{}", &solution)?;
@@ -66,64 +68,4 @@ pub fn run(args: &RunArgs) -> anyhow::Result<String> {
     }
 
     Ok(solution)
-}
-
-/// Define a `main` function for solutions. Assumes the solution function ([`SolveFn`]) is named
-/// `solve()`.
-///
-/// Example:
-/// ```ignore
-/// # // This doctest fails because it doesn't depend on `tracing_subscriber`
-/// use std::fs::File;
-/// use std::io::{BufRead, BufReader};
-///
-/// fn solve(reader: BufReader<File>) -> anyhow::Result<String> {
-///     for line in reader.lines() {
-///         tracing::info!("{line:?}");
-///     }
-///     Ok("123".into())
-/// }
-///
-/// util::main!();
-/// ```
-#[macro_export]
-macro_rules! main {
-    () => {
-        pub fn main() -> anyhow::Result<()> {
-            tracing_subscriber::fmt::init();
-            use util::aoc::Aoc;
-            use util::cli::{Command, SolutionCli, clap::Parser};
-            use util::runner::{RunArgs, run};
-            use util::{input_filepath, solution_filepath};
-            let args = SolutionCli::parse();
-
-            match args.command() {
-                Command::Solve(solve_args) => {
-                    let aoc_client = if solve_args.submit {
-                        Some(Aoc::new()?)
-                    } else {
-                        None
-                    };
-                    run(&RunArgs {
-                        solve_fn: solve,
-                        input_filepath: input_filepath!(solve_args),
-                        solution_filepath: solution_filepath!(solve_args),
-                        problem: env!("CARGO_BIN_NAME"),
-                        aoc_client,
-                    })?;
-                }
-                Command::DownloadInput => {
-                    let filepath = concat!(
-                        env!("CARGO_MANIFEST_DIR"),
-                        "/",
-                        env!("CARGO_PKG_NAME"),
-                        ".input"
-                    );
-                    Aoc::new()?.download_input(env!("CARGO_PKG_NAME"), filepath)?;
-                }
-            }
-
-            Ok(())
-        }
-    };
 }

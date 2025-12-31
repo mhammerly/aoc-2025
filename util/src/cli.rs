@@ -1,6 +1,10 @@
-use std::path::PathBuf;
-
 use clap::{Args, Parser, Subcommand};
+
+use crate::{
+    Solution,
+    aoc::Aoc,
+    runner::{RunArgs, run},
+};
 
 pub use clap;
 
@@ -21,48 +25,7 @@ pub struct SolveArgs {
     pub submit: bool,
 }
 
-/// Plugs a package's own `CARGO_MANIFEST_DIR` and `CARGO_PKG_NAME` into [`SolveArgs::input_filepath`]
-/// to construct a proper path for that package.
-#[macro_export]
-macro_rules! input_filepath {
-    ($args:expr) => {
-        $args.input_filepath(env!("CARGO_MANIFEST_DIR"), env!("CARGO_PKG_NAME"))
-    };
-}
-
-/// Plugs a binary's own `CARGO_MANIFEST_DIR` and `CARGO_BIN_NAME` into [`SolveArgs::input_filepath`]
-/// to construct a proper path for that package.
-#[macro_export]
-macro_rules! solution_filepath {
-    ($args:expr) => {
-        $args.solution_filepath(env!("CARGO_MANIFEST_DIR"), env!("CARGO_BIN_NAME"))
-    };
-}
-
-impl SolveArgs {
-    /// Given a package's manifest directory and package name, construct an input filepath for that
-    /// package based on [the `--input` argument](SolveArgs::input).
-    pub fn input_filepath(&self, manifest_dir: &str, package: &str) -> PathBuf {
-        let input_filename = self
-            .input
-            .as_ref()
-            .map(|input| format!("{}.{}.input", package, input))
-            .unwrap_or(format!("{}.input", package));
-        PathBuf::from_iter(&[manifest_dir, &input_filename])
-    }
-
-    /// Given a binary's manifest directory and binary name, construct an input filepath for that
-    /// binary based on [the `--input` argument](SolveArgs::input).
-    pub fn solution_filepath(&self, manifest_dir: &str, binary: &str) -> PathBuf {
-        let solution_filename = self
-            .input
-            .as_ref()
-            .map(|input| format!("{}.{}.solution", binary, input))
-            .unwrap_or(format!("{}.solution", binary));
-        PathBuf::from_iter(&[manifest_dir, &solution_filename])
-    }
-}
-
+/// Actions that an AoC solution binary can perform.
 #[derive(Subcommand, Clone)]
 pub enum Command {
     /// Run a solution implementation.
@@ -74,11 +37,25 @@ pub enum Command {
     DownloadInput,
 }
 
+/// CLI for Advent of Code solutions.
+///
+/// Supports:
+/// - downloading input files from AoC
+/// - running solutions locally
+/// - submitting solutions to AoC
+/// - saving correct solutions locally
+///
+/// Provide an AoC session cookie via the `$AOC_SESSION_COOKIE` environment variable. The cookie
+/// must begin with `session=`.
 #[derive(Parser)]
 pub struct SolutionCli {
+    /// The command that should be run for this invocation. If not specified, the `command()`
+    /// method implementation will default to [`Command::Solve`].
     #[command(subcommand)]
     command: Option<Command>,
 
+    /// The arguments for the [`Command::Solve`] command, but accepted as top-level arguments. This
+    /// allows solution binaries to omit the `solve` command.
     #[clap(flatten)]
     solve_args: SolveArgs,
 }
@@ -90,5 +67,25 @@ impl SolutionCli {
         self.command
             .clone()
             .unwrap_or(Command::Solve(self.solve_args.clone()))
+    }
+
+    /// Run the CLI for an Advent of Code solution.
+    pub fn run(&self, solution: &Solution) -> anyhow::Result<String> {
+        match self.command() {
+            Command::Solve(solve_args) => {
+                let aoc_client = solve_args.submit.then_some(Aoc::new()).transpose()?;
+                run(&RunArgs {
+                    problem: solution.problem.clone(),
+                    solve_fn: solution.solve_fn,
+                    input_filepath: solution.input_file(&solve_args.input),
+                    solution_filepath: solution.solution_file(&solve_args.input),
+                    aoc_client,
+                })?;
+            }
+            Command::DownloadInput => {
+                Aoc::new()?.download_input(&solution.problem, solution.input_file(&None))?;
+            }
+        }
+        Ok("".into())
     }
 }

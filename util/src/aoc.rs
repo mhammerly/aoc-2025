@@ -1,8 +1,11 @@
 use std::collections::BTreeMap;
 use std::fs::File;
 use std::io::Write;
+use std::path::Path;
 
 use reqwest::{Url, blocking::Client, cookie::Jar, header};
+
+use crate::Problem;
 
 const AOC_BASE_URL: &str = "https://adventofcode.com";
 
@@ -71,19 +74,6 @@ pub enum AocError {
     ClientError(#[from] reqwest::Error),
 }
 
-fn day_number(day: &str) -> Result<char, AocError> {
-    day.chars()
-        .nth(3)
-        .ok_or(AocError::UnrecognizedDay(day.into()))
-}
-
-fn part_number(problem: &str) -> Result<char, AocError> {
-    problem
-        .chars()
-        .nth(5)
-        .ok_or(AocError::UnrecognizedProblem(problem.into()))
-}
-
 /// Advent of Code client.
 pub struct Aoc {
     client: Client,
@@ -113,21 +103,25 @@ impl Aoc {
     /// View a day's input file.
     ///
     /// `day` is expected to be `day1`, `day2`, or similar, as it would be from `$CARGO_PKG_NAME`.
-    pub fn view_input(&self, day: &str) -> Result<String, AocError> {
-        let day_number = day_number(day)?;
-        let url = format!("{AOC_BASE_URL}/2025/day/{day_number}/input");
-        tracing::info!("Fetching {day} input from {url}");
+    pub fn view_input(&self, problem: &Problem) -> Result<String, AocError> {
+        let day = &problem.day;
+        let url = format!("{AOC_BASE_URL}/2025/day/{day}/input");
+        tracing::info!("Fetching {problem} input from {url}");
         Ok(self.client.get(url).send()?.text()?)
     }
 
     /// Download a day's input file to `filepath`.
     ///
     /// `day` is expected to be `day1`, `day2`, or similar, as it would be from `$CARGO_PKG_NAME`.
-    pub fn download_input(&self, day: &str, filepath: &str) -> Result<(), AocError> {
-        let input = self.view_input(day)?;
+    pub fn download_input<P: AsRef<Path>>(
+        &self,
+        problem: &Problem,
+        filepath: P,
+    ) -> Result<(), AocError> {
+        let input = self.view_input(problem)?;
 
-        let mut file = File::create(filepath)?;
-        tracing::info!("Saving {day} input to {filepath}");
+        let mut file = File::create(filepath.as_ref())?;
+        tracing::info!("Saving {problem} input to {}", filepath.as_ref().display());
         Ok(write!(file, "{}", input)?)
     }
 
@@ -135,15 +129,14 @@ impl Aoc {
     ///
     /// `problem` is expected to be `day1-1`, `day2-2`, or similar, as it would be from
     /// `$CARGO_BIN_NAME`.
-    pub fn submit(&self, problem: &str, solution: &str) -> Result<AocResult, AocError> {
-        let day_number = day_number(problem)?;
-        let part_number = part_number(problem)?;
-        let url = format!("{AOC_BASE_URL}/2025/day/{day_number}/answer");
+    pub fn submit(&self, problem: &Problem, solution: &str) -> Result<AocResult, AocError> {
+        let day = &problem.day;
+        let url = format!("{AOC_BASE_URL}/2025/day/{day}/answer");
         tracing::info!(?solution, "Posting to {url}");
 
         let formdata = BTreeMap::from_iter([
-            ("level".to_string(), part_number.to_string()),
-            ("answer".to_string(), solution.to_owned()),
+            ("level".to_string(), problem.part.as_str()),
+            ("answer".to_string(), solution),
         ]);
         tracing::info!("Form {:?}", formdata);
         let response = self
