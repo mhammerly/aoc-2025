@@ -4,11 +4,9 @@ use std::io::{BufRead, BufReader};
 use day6::*;
 
 fn solve(reader: BufReader<File>) -> anyhow::Result<String> {
-    for line in reader.lines() {
-        tracing::trace!("{line:?}");
-    }
-
-    panic!("not implemented");
+    Ok(Worksheet::new(reader.lines())?
+        .solve(NumberFormat::TopBottomRightLeft)?
+        .to_string())
 }
 
 util::main!();

@@ -60,6 +60,7 @@ pub fn run(args: &RunArgs) -> anyhow::Result<String> {
         tracing::info!("Submitting solution to AOC");
         let aoc_result = aoc.submit(&args.problem, &solution)?;
         if aoc_result == AocResult::Correct {
+            tracing::info!("Correct! (`{}`)", solution);
             let mut file = File::create(&args.solution_filepath)?;
             write!(file, "{}", &solution)?;
         } else {
