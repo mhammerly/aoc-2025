@@ -60,9 +60,9 @@ util::main!();
 EOF
 cp $day/src/part_1.rs $day/src/part_2.rs
 
-if [ -n $aoc_cookie ]; then
+if [ -n $AOC_SESSION_COOKIE ]; then
     echo "Session cookie set, downloading input for $day"
-    cargo run --bin $day-1 -- download-input --session-cookie $aoc_cookie
+    cargo run --bin $day-1 -- download-input
 fi
 
 # go back to wherever we were before
